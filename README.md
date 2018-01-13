@@ -1,6 +1,8 @@
 # track!
-A Telegram bot that tracks osu! players for theirs new top scores
-This is a part of hime project - an attempt to create a feature-rich and
+
+## Description
+* A Telegram bot that tracks osu! players for theirs new top scores
+* This is a part of hime project - an attempt to create a feature-rich and
 good-integrated bot in osu! group on Telegram
 
 ## Dependencies
