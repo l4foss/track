@@ -24,3 +24,20 @@ func readConfig(filename string) (Config, error) {
 	json.Unmarshal(data, &config)
 	return config, nil
 }
+
+func genConfig() error {
+	var conf string = `{
+    "osu": "OSU TOKEN",
+    "telegram": "TELEGRAM TOKEN",
+    "broadcast": BROADCAST_CHATID,
+    "interval": 60,
+    "trackdb": "data.db",
+	"track": ["Cookiezi", "Rafis"]
+}`
+
+	err := ioutil.WriteFile("config.sample", []byte(conf), 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}

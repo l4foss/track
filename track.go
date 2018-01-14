@@ -6,7 +6,6 @@ import (
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 	_ "github.com/mattn/go-sqlite3"
 	gosu "github.com/thehowl/go-osuapi"
-	"io/ioutil"
 	"log"
 	"os"
 	"runtime"
@@ -184,7 +183,7 @@ func track() {
 
 func usage() {
 	var txt string = `Track v%s
-A bot that tracks for osu! players
+A bot that tracks osu! player for theirs top scores
 --
 Usage: %s [option]
 Options:
@@ -195,23 +194,6 @@ Options:
 `
 	fmt.Printf(txt, VERSION, os.Args[0])
 	os.Exit(0)
-}
-
-func genConfig() error {
-	var conf string = `{
-    "osu": "OSU TOKEN",
-    "telegram": "TELEGRAM TOKEN",
-    "broadcast": BROADCAST_CHATID,
-    "interval": 60,
-    "trackdb": "data.db",
-	"track": ["Cookiezi", "Rafis"]
-}`
-
-	err := ioutil.WriteFile("config.sample", []byte(conf), 0644)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func main() {
