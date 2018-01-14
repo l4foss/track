@@ -82,7 +82,7 @@ func getPlayers() ([]string, error) {
 func getUsers() ([]string, error) {
 	rows, err := db.Query(`SELECT playername FROM track WHERE group=$`, 1)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer rows.Close()
 
