@@ -10,6 +10,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	gosu "github.com/thehowl/go-osuapi"
 	"log"
+	"sync"
+)
+
+var (
+	writeLock = &sync.Mutex{}
 )
 
 type User struct {
@@ -31,22 +36,48 @@ func initDB() error {
 		return err
 	}
 
-	//try to get all players
-	players, err := getPlayers()
+	//check if table exists
+	exist := existTable("track")
 
-	if err != nil || len(players) == 0 {
+	if exist == true {
+		//try to get all players
+		players, err := getPlayers()
+		if err != nil {
+			return err
+		}
+
+		log.Printf("players: %v\n", players)
+		return nil
+	} else {
 		/*
 		* create new
 		 */
-		stmt := "CREATE TABLE \"track\" ( `group` INTEGER, `username` TEXT, `id` INTEGER, `oldAcc` float, `oldPP` float, `oldRank` INTEGER, `oldCRank` INTEGER, PRIMARY KEY(`username`) )"
-		log.Println("Database does not exist, creating new ...")
-		_, err := db.Exec(stmt)
+		log.Println("Table does not exist, creating new ...")
+		stmt := "CREATE TABLE \"track\" ( `group` INTEGER, `playername` TEXT, `id` INTEGER, `oldAcc` float, `oldPP` float, `oldRank` INTEGER, `oldCRank` INTEGER, PRIMARY KEY(`playername`) )"
+		_, err = db.Exec(stmt)
 
 		if err != nil {
 			return err
 		}
+		return nil
 	}
-	return nil
+}
+
+/*
+* check if a table exists
+ */
+func existTable(tblname string) bool {
+	var name string
+	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name=?`, tblname).Scan(&name)
+
+	switch {
+	case err == sql.ErrNoRows:
+		return false
+	case err != nil:
+		return false
+	default:
+		return true
+	}
 }
 
 /*
@@ -76,11 +107,44 @@ func getPlayers() ([]string, error) {
 }
 
 /*
-* get all players who are not in group
-* that means we don't include them in group ranking
+* add new player to db
+* safe to call simultaneously
+ */
+func addPlayer(name string, group int) error {
+	stmt, err := db.Prepare(`INSERT INTO track (group, username, id, oldAcc, oldPP, oldRank, oldCRank)
+	VALUES (?, ?, ?, ?, ?, ?, ?)`)
+
+	/*
+	* get info from osu!
+	 */
+	opts := gosu.GetUserOpts{
+		Username:  name,
+		Mode:      gosu.ModeOsu,
+		EventDays: 7,
+	}
+
+	user, err := osu.GetUser(opts)
+	if err != nil {
+		return err
+	}
+
+	writeLock.Lock()
+	stmt.Exec(group,
+		user.Username,
+		user.UserID,
+		user.Accuracy,
+		user.PP,
+		user.Rank,
+		user.CountryRank)
+	writeLock.Unlock()
+	return nil
+}
+
+/*
+* get all players who are in group
  */
 func getUsers() ([]string, error) {
-	rows, err := db.Query(`SELECT playername FROM track WHERE group=$`, 1)
+	rows, err := db.Query(`SELECT playername FROM track WHERE group=$1`, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -139,12 +203,14 @@ func updateInfo(user *gosu.User) error {
 		return err
 	}
 
+	writeLock.Lock()
 	_, err = stmt.Exec(user.UserID,
 		user.Accuracy,
 		user.PP,
 		user.Rank,
 		user.CountryRank,
 		user.Username)
+	writeLock.Unlock()
 	if err != nil {
 		return err
 	}
