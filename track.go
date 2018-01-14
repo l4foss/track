@@ -134,12 +134,12 @@ func genMessage(play *gosu.GUSScore, playername string, index int) {
 }
 
 func getTop(playername string, wg *sync.WaitGroup) {
-	fmt.Printf("Fetching new score for %s\n", playername)
+	log.Printf("Fetching new score for %s\n", playername)
 	defer wg.Done()
 	opts := gosu.GetUserScoresOpts{
 		Username: playername,
 		Mode:     gosu.ModeOsu,
-		Limit:    50,
+		Limit:    config.Limit,
 	}
 
 	top, err := osu.GetUserBest(opts)
@@ -163,14 +163,9 @@ func getTop(playername string, wg *sync.WaitGroup) {
 }
 
 func track() {
-	users, err := getUsers()
-
-	if err != nil {
-		log.Fatal(err)
-	}
 	var wg sync.WaitGroup
 	for {
-		for _, user := range users {
+		for _, user := range config.Users {
 			wg.Add(1)
 			go getTop(user, &wg)
 		}
