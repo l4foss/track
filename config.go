@@ -10,6 +10,7 @@ type Config struct {
 	Telegram  string   `json:"telegram"`
 	Broadcast int64    `json:"broadcast"`
 	Interval  int64    `json:"interval"`
+	Limit     int      `json:"limit"`
 	TrackDB   string   `json:"trackdb"`
 	Users     []string `json:"track"`
 }
@@ -31,6 +32,7 @@ func genConfig() error {
     "telegram": "TELEGRAM TOKEN",
     "broadcast": BROADCAST_CHATID,
     "interval": 60,
+	"limit": 50,
     "trackdb": "data.db",
 	"track": ["Cookiezi", "Rafis"]
 }`
