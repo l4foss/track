@@ -11,6 +11,7 @@ import (
 	gosu "github.com/thehowl/go-osuapi"
 	"log"
 	"sync"
+	"fmt"
 )
 
 var (
@@ -46,6 +47,18 @@ func initDB() error {
 			return err
 		}
 
+		log.Println("Checking for players in database")
+		for _, player := range config.Users {
+			log.Println(player)
+			exist := existPlayer(player)
+
+			if exist == false {
+				//create new entry in the database
+				fmt.Println("User does not exist in database, creating new ...")
+			}
+		}
+
+
 		log.Printf("players: %v\n", players)
 		return nil
 	} else {
@@ -69,6 +82,23 @@ func initDB() error {
 func existTable(tblname string) bool {
 	var name string
 	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name=?`, tblname).Scan(&name)
+
+	switch {
+	case err == sql.ErrNoRows:
+		return false
+	case err != nil:
+		return false
+	default:
+		return true
+	}
+}
+
+/*
+* check if a user exist
+*/
+func existPlayer(playername string) bool {
+	var name string
+	err := db.QueryRow(`SELECT playername FROM track WHERE name=?`, playername).Scan(&name)
 
 	switch {
 	case err == sql.ErrNoRows:
