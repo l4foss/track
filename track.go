@@ -22,7 +22,7 @@ var (
 	osu    *gosu.Client
 	bot    *tg.BotAPI
 	db     *sql.DB
-	lock   = &sync.Mutex{}
+	teleLock   = &sync.Mutex{}
 	err    error
 	config Config
 )
@@ -31,7 +31,7 @@ var (
 * some formatted strings
  */
 var (
-	msg string = `New <a href="%s">#%d</a> for <a href=https://osu.ppy.sh/u/%d>%s</a> on %v
+	msgFmt string = `New <a href="%s">#%d</a> for <a href=https://osu.ppy.sh/u/%d>%s</a> on %v
 Map: <a href="http://osu.ppy.sh/b/%d">%s</a> [%s]
 Star: <b>%d</b> BPM: <b>%d</b>
 Mods: <b>%s</b> Acc: <b>%.2f%%</b> Rank: <b>%v</b>
@@ -41,10 +41,12 @@ Combo: <b>%dx/%dx</b> PP: <b>%.2fpp</b>
 %s
 </pre>`
 
-	//				  #01 | SH  | rinq0 | HDHRDTSONF | 111x/222x  | 95.35%
-	msgUser string = `#%2d| %3s | %10s  | %10s       | %4dx/%4dx  | %2.2f%%`
+	scoreFmt string = `#%2d| %3s | %10s  | %10s       | %4dx/%4dx  | %2.2f%%`
 )
 
+/*
+* checks database, creates telegram and osu client
+*/
 func initTrack() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
@@ -65,6 +67,9 @@ func initTrack() {
 	log.Println("Done initializing the track! bot")
 }
 
+/*
+* generates group ranking on a map
+*/
 func genGroupRanking(mapid int) string {
 	//get only group members
 	users, err := getUsers()
@@ -95,6 +100,9 @@ func genGroupRanking(mapid int) string {
 
 }
 
+/*
+* calculates score accuracy
+*/
 func calcAccuracy(play *gosu.GUSScore) float64 {
 	//generates accuracy
 	total := play.MaxCombo * 300
@@ -103,6 +111,9 @@ func calcAccuracy(play *gosu.GUSScore) float64 {
 	return float64((got * 100) / total)
 }
 
+/*
+* generates telegram message
+*/
 func genMessage(play *gosu.GUSScore, playername string, index int) {
 	opts := gosu.GetBeatmapsOpts{
 		BeatmapID: play.BeatmapID,
@@ -116,7 +127,7 @@ func genMessage(play *gosu.GUSScore, playername string, index int) {
 	bm := beatmap[0]
 	thumb := fmt.Sprintf("https://b.ppy.sh/thumb/%dl.jpg", bm.BeatmapSetID)
 
-	message := fmt.Sprintf(msg, thumb, index+1,
+	message := fmt.Sprintf(msgFmt, thumb, index+1,
 		play.Score.UserID, playername, play.Score.Date,
 		play.BeatmapID, bm.Title, bm.Artist,
 		bm.DifficultyRating, bm.BPM,
@@ -126,13 +137,18 @@ func genMessage(play *gosu.GUSScore, playername string, index int) {
 	* sends the message using telegram
 	* since this runs concurrently, we should use mutex to lock it
 	 */
-	lock.Lock()
+	teleLock.Lock()
 	resp := tg.NewMessage(config.Broadcast, message)
 	bot.Send(resp)
 
-	lock.Unlock()
+	teleLock.Unlock()
 }
 
+/*
+* checks for new top scores and generates
+* telegram message
+* called concurrently
+*/
 func getTop(playername string, wg *sync.WaitGroup) {
 	log.Printf("Fetching new score for %s\n", playername)
 	defer wg.Done()
@@ -162,6 +178,9 @@ func getTop(playername string, wg *sync.WaitGroup) {
 	}
 }
 
+/*
+* tracks users for each interval of time
+*/
 func track() {
 	var wg sync.WaitGroup
 	for {
@@ -176,6 +195,9 @@ func track() {
 	}
 }
 
+/*
+* prints usage
+*/
 func usage() {
 	var txt string = `Track v%s
 A bot that tracks osu! player for theirs top scores
@@ -183,7 +205,7 @@ A bot that tracks osu! player for theirs top scores
 Usage: %s [option]
 Options:
 	--conf [config file]         runs the bot with config file
-	--init                       creates sample config
+	--genconf                    generates sample config
 	--version                    shows version
 	--help                       shows this help
 `
@@ -191,6 +213,9 @@ Options:
 	os.Exit(0)
 }
 
+/*
+* main function
+*/
 func main() {
 	if len(os.Args) == 1 {
 		usage()
@@ -201,7 +226,7 @@ func main() {
 		{
 			usage()
 		}
-	case "--init":
+	case "--genconf":
 		{
 			err := genConfig()
 			if err != nil {
