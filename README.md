@@ -17,7 +17,7 @@ good-integrated bot in osu! group on Telegram
 * [go-sqlite3](https://github.com/mattn/go-sqlite3)
 
 ## Authors
-* l4foss
+* [l4](l4.foss@gmail.com)
 
 ## License
 * MIT
