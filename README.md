@@ -2,8 +2,8 @@
 ![demo](track.png)
 ## Description
 * A Telegram bot that tracks osu! players for theirs new top scores
-* This is a part of hime project - an attempt to create a feature-rich and
-good-integrated bot in osu! group on Telegram
+* This is a part of *hime* project - an attempt to create a feature-rich and
+good-integrated bot for my osu! group
 
 ## Features
 * Tracks osu! players for each interval of time
@@ -17,7 +17,7 @@ good-integrated bot in osu! group on Telegram
 * [go-sqlite3](https://github.com/mattn/go-sqlite3)
 
 ## Authors
-* [l4](l4.foss@gmail.com)
+* l4
 
 ## License
 * MIT
