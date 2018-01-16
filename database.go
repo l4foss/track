@@ -11,7 +11,6 @@ import (
 	gosu "github.com/thehowl/go-osuapi"
 	"log"
 	"sync"
-	"fmt"
 )
 
 var (
@@ -54,7 +53,12 @@ func initDB() error {
 
 			if exist == false {
 				//create new entry in the database
-				fmt.Println("User does not exist in database, creating new ...")
+				err = addUser(user, 1)
+				if err != nil {
+					log.Printf("Added new user %s to database\n", user)
+				} else  {
+					log.Printf("Could not add %s to database due to %s\n", user, err)
+				}
 			}
 		}
 
