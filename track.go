@@ -114,7 +114,7 @@ func calcAccuracy(play *gosu.GUSScore) float64 {
 /*
 * generates telegram message
 */
-func genMessage(play *gosu.GUSScore, playername string, index int) {
+func genMessage(play *gosu.GUSScore, username string, index int) {
 	opts := gosu.GetBeatmapsOpts{
 		BeatmapID: play.BeatmapID,
 	}
@@ -128,7 +128,7 @@ func genMessage(play *gosu.GUSScore, playername string, index int) {
 	thumb := fmt.Sprintf("https://b.ppy.sh/thumb/%dl.jpg", bm.BeatmapSetID)
 
 	message := fmt.Sprintf(msgFmt, thumb, index+1,
-		play.Score.UserID, playername, play.Score.Date,
+		play.Score.UserID, username, play.Score.Date,
 		play.BeatmapID, bm.Title, bm.Artist,
 		bm.DifficultyRating, bm.BPM,
 		play.Mods)
@@ -149,11 +149,11 @@ func genMessage(play *gosu.GUSScore, playername string, index int) {
 * telegram message
 * called concurrently
 */
-func getTop(playername string, wg *sync.WaitGroup) {
-	log.Printf("Fetching new score for %s\n", playername)
+func getTop(username string, wg *sync.WaitGroup) {
+	log.Printf("Fetching new score for %s\n", username)
 	defer wg.Done()
 	opts := gosu.GetUserScoresOpts{
-		Username: playername,
+		Username: username,
 		Mode:     gosu.ModeOsu,
 		Limit:    config.Limit,
 	}
@@ -173,7 +173,7 @@ func getTop(playername string, wg *sync.WaitGroup) {
 
 		if time.Now().Sub(play.Score.Date.GetTime()) <
 			(time.Duration(config.Interval) * time.Second) {
-			genMessage(&play, playername, index)
+			genMessage(&play, username, index)
 		}
 	}
 }
@@ -200,7 +200,7 @@ func track() {
 */
 func usage() {
 	var txt string = `Track v%s
-A bot that tracks osu! player for theirs top scores
+A bot that tracks osu! user for theirs top scores
 --
 Usage: %s [option]
 Options:

@@ -2,7 +2,7 @@ package main
 
 /*
 * database scheme
-* |group|playername|oldAcc|oldPP|oldRank|oldCRank|
+* |group|username|oldAcc|oldPP|oldRank|oldCRank|
 * |bool | string   |float |float|int    |int     |
  */
 import (
@@ -20,7 +20,7 @@ var (
 
 type User struct {
 	group      int
-	playername string
+	username string
 	id         int
 	oldAcc     float64
 	oldPP      float64
@@ -41,16 +41,16 @@ func initDB() error {
 	exist := existTable("track")
 
 	if exist == true {
-		//try to get all players
-		players, err := getPlayers()
+		//try to get all users
+		users, err := getUsers()
 		if err != nil {
 			return err
 		}
 
-		log.Println("Checking for players in database")
-		for _, player := range config.Users {
-			log.Println(player)
-			exist := existPlayer(player)
+		log.Println("Checking for users in database")
+		for _, user := range config.Users {
+			log.Println(user)
+			exist := existUser(user)
 
 			if exist == false {
 				//create new entry in the database
@@ -59,14 +59,14 @@ func initDB() error {
 		}
 
 
-		log.Printf("players: %v\n", players)
+		log.Printf("users: %v\n", users)
 		return nil
 	} else {
 		/*
 		* create new
 		 */
 		log.Println("Table does not exist, creating new ...")
-		stmt := "CREATE TABLE \"track\" ( `group` INTEGER, `playername` TEXT, `id` INTEGER, `oldAcc` float, `oldPP` float, `oldRank` INTEGER, `oldCRank` INTEGER, PRIMARY KEY(`playername`) )"
+		stmt := "CREATE TABLE \"track\" ( `group` INTEGER, `username` TEXT, `id` INTEGER, `oldAcc` float, `oldPP` float, `oldRank` INTEGER, `oldCRank` INTEGER, PRIMARY KEY(`username`) )"
 		_, err = db.Exec(stmt)
 
 		if err != nil {
@@ -96,9 +96,9 @@ func existTable(tblname string) bool {
 /*
 * check if a user exist
 */
-func existPlayer(playername string) bool {
+func existUser(username string) bool {
 	var name string
-	err := db.QueryRow(`SELECT playername FROM track WHERE name=?`, playername).Scan(&name)
+	err := db.QueryRow(`SELECT username FROM track WHERE name=?`, username).Scan(&name)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -111,10 +111,10 @@ func existPlayer(playername string) bool {
 }
 
 /*
-* get all players
+* get all users
  */
-func getPlayers() ([]string, error) {
-	rows, err := db.Query(`SELECT playername FROM track`)
+func getUsers() ([]string, error) {
+	rows, err := db.Query(`SELECT username FROM track`)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func getPlayers() ([]string, error) {
 	var result []string
 	var user string
 	for rows.Next() {
-		//err = rows.Scan(&user.group, &user.playername, &user.id,
+		//err = rows.Scan(&user.group, &user.username, &user.id,
 		//	&user.oldAcc, &user.oldPP, &user.oldRank, &user.oldCRank)
 
 		err = rows.Scan(&user)
@@ -137,10 +137,10 @@ func getPlayers() ([]string, error) {
 }
 
 /*
-* add new player to db
+* add new user to db
 * safe to call simultaneously
  */
-func addPlayer(name string, group int) error {
+func addUser(name string, group int) error {
 	stmt, err := db.Prepare(`INSERT INTO track (group, username, id, oldAcc, oldPP, oldRank, oldCRank)
 	VALUES (?, ?, ?, ?, ?, ?, ?)`)
 
@@ -171,10 +171,10 @@ func addPlayer(name string, group int) error {
 }
 
 /*
-* get all players who are in group
+* get all users who are in group
  */
-func getUsers() ([]string, error) {
-	rows, err := db.Query(`SELECT playername FROM track WHERE group=$1`, 1)
+func getGroupUsers() ([]string, error) {
+	rows, err := db.Query(`SELECT username FROM track WHERE group=$1`, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func getUsers() ([]string, error) {
 	var result []string
 	var user string
 	for rows.Next() {
-		//err = rows.Scan(&user.group, &user.playername, &user.id,
+		//err = rows.Scan(&user.group, &user.username, &user.id,
 		//	&user.oldAcc, &user.oldPP, &user.oldRank, &user.oldCRank)
 
 		err = rows.Scan(&user)
@@ -199,15 +199,15 @@ func getUsers() ([]string, error) {
 /*
 * returns info of user
  */
-func getInfo(playername string) (User, error) {
+func getInfo(username string) (User, error) {
 	var user User
-	row := db.QueryRow(`SELECT * FROM track WHERE playername=$1`, playername)
+	row := db.QueryRow(`SELECT * FROM track WHERE username=$1`, username)
 
 	if err != nil {
 		return user, err
 	}
 
-	err = row.Scan(&user.group, &user.playername, &user.id,
+	err = row.Scan(&user.group, &user.username, &user.id,
 		&user.oldAcc, &user.oldPP, &user.oldRank, &user.oldCRank)
 
 	if err != nil {
@@ -227,7 +227,7 @@ func updateInfo(user *gosu.User) error {
 		oldPP=?,
 		oldRank=?,
 		oldCRank=?
-		WHERE playername=?`)
+		WHERE username=?`)
 
 	if err != nil {
 		return err
