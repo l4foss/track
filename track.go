@@ -19,12 +19,12 @@ const VERSION string = "0.1beta"
 * global variables
  */
 var (
-	osu    *gosu.Client
-	bot    *tg.BotAPI
-	db     *sql.DB
-	teleLock   = &sync.Mutex{}
-	err    error
-	config Config
+	osu      *gosu.Client
+	bot      *tg.BotAPI
+	db       *sql.DB
+	teleLock = &sync.Mutex{}
+	err      error
+	config   Config
 )
 
 /*
@@ -46,16 +46,11 @@ Combo: <b>%dx/%dx</b> PP: <b>%.2fpp</b>
 
 /*
 * checks database, creates telegram and osu client
-*/
+ */
 func initTrack() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	log.Printf("Tracking: %v\n", config.Users)
-	err = initDB()
-
-	if err != nil {
-		log.Fatal(err)
-	}
 	/*
 	* creates telegram client and osu client
 	 */
@@ -64,12 +59,18 @@ func initTrack() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	err = initDB()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	log.Println("Done initializing the track! bot")
 }
 
 /*
 * generates group ranking on a map
-*/
+ */
 func genGroupRanking(mapid int) string {
 	//get only group members
 	users, err := getUsers()
@@ -102,7 +103,7 @@ func genGroupRanking(mapid int) string {
 
 /*
 * calculates score accuracy
-*/
+ */
 func calcAccuracy(play *gosu.GUSScore) float64 {
 	//generates accuracy
 	total := play.MaxCombo * 300
@@ -113,7 +114,7 @@ func calcAccuracy(play *gosu.GUSScore) float64 {
 
 /*
 * generates telegram message
-*/
+ */
 func genMessage(play *gosu.GUSScore, username string, index int) {
 	opts := gosu.GetBeatmapsOpts{
 		BeatmapID: play.BeatmapID,
@@ -148,7 +149,7 @@ func genMessage(play *gosu.GUSScore, username string, index int) {
 * checks for new top scores and generates
 * telegram message
 * called concurrently
-*/
+ */
 func getTop(username string, wg *sync.WaitGroup) {
 	log.Printf("Fetching new score for %s\n", username)
 	defer wg.Done()
@@ -180,7 +181,7 @@ func getTop(username string, wg *sync.WaitGroup) {
 
 /*
 * tracks users for each interval of time
-*/
+ */
 func track() {
 	var wg sync.WaitGroup
 	for {
@@ -197,7 +198,7 @@ func track() {
 
 /*
 * prints usage
-*/
+ */
 func usage() {
 	var txt string = `Track v%s
 A bot that tracks osu! user for theirs top scores
@@ -215,7 +216,7 @@ Options:
 
 /*
 * main function
-*/
+ */
 func main() {
 	if len(os.Args) == 1 {
 		usage()
