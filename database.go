@@ -18,13 +18,13 @@ var (
 )
 
 type User struct {
-	group      int
+	group    int
 	username string
-	id         int
-	oldAcc     float64
-	oldPP      float64
-	oldRank    int
-	oldCRank   int
+	id       int
+	oldAcc   float64
+	oldPP    float64
+	oldRank  int
+	oldCRank int
 }
 
 /*
@@ -56,12 +56,11 @@ func initDB() error {
 				err = addUser(user, 1)
 				if err != nil {
 					log.Printf("Added new user %s to database\n", user)
-				} else  {
+				} else {
 					log.Printf("Could not add %s to database due to %s\n", user, err)
 				}
 			}
 		}
-
 
 		log.Printf("users: %v\n", users)
 		return nil
@@ -99,7 +98,7 @@ func existTable(tblname string) bool {
 
 /*
 * check if a user exist
-*/
+ */
 func existUser(username string) bool {
 	var name string
 	err := db.QueryRow(`SELECT username FROM track WHERE name=?`, username).Scan(&name)
@@ -147,6 +146,9 @@ func getUsers() ([]string, error) {
 func addUser(name string, group int) error {
 	stmt, err := db.Prepare(`INSERT INTO track (group, username, id, oldAcc, oldPP, oldRank, oldCRank)
 	VALUES (?, ?, ?, ?, ?, ?, ?)`)
+	if err != nil {
+		return err
+	}
 
 	/*
 	* get info from osu!
