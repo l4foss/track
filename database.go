@@ -15,6 +15,7 @@ import (
 
 var (
 	writeLock = &sync.Mutex{}
+	finish    chan bool
 )
 
 type User struct {
@@ -46,22 +47,19 @@ func initDB() error {
 			return err
 		}
 
-		log.Println("Checking for users in database")
+		if config.Verbose == 1 {
+			log.Println("Checking for users in database")
+		}
 		for _, user := range config.Users {
 			exist := existUser(user)
 
 			if exist == false {
-				//create new entry in the database
-				err = addUser(user, 1)
-				if err != nil {
-					log.Printf("Could not add %s to database due to %s\n", user, err)
-				} else {
-					log.Printf("Added new user %s to database\n", user)
-				}
+				addUser(user, 1)
+				<-finish
 			}
 		}
 
-		log.Printf("users in database: %v\n", users)
+		log.Printf("Users in database: %v\n", users)
 		return nil
 	} else {
 		/*
@@ -75,13 +73,13 @@ func initDB() error {
 			return err
 		}
 
+		//add users to new database
 		for _, user := range config.Users {
-			err = addUser(user, 1)
-			if err != nil {
-				log.Printf("Could not add %s to database due to %s\n", user, err)
-			} else {
-				log.Printf("Added new user %s to database\n", user)
-			}
+			go addUser(user, 1)
+		}
+
+		for _, _ = range config.Users {
+			<-finish
 		}
 
 		return nil
@@ -152,10 +150,11 @@ func getUsers() ([]string, error) {
 * add new user to db
 * safe to call simultaneously
  */
-func addUser(name string, group int) error {
+func addUser(name string, group int) {
 	stmt, err := db.Prepare(`INSERT INTO track VALUES(?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
-		return err
+		log.Printf("Could not add to database due to %s\n", err.Error())
+		return
 	}
 
 	/*
@@ -169,7 +168,8 @@ func addUser(name string, group int) error {
 
 	user, err := osu.GetUser(opts)
 	if err != nil {
-		return err
+		log.Printf("Could not get user info due to %s\n", err.Error())
+		return
 	}
 
 	writeLock.Lock()
@@ -181,7 +181,8 @@ func addUser(name string, group int) error {
 		user.Rank,
 		user.CountryRank)
 	writeLock.Unlock()
-	return nil
+
+	finish <- true
 }
 
 /*
