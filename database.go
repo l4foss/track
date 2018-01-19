@@ -48,21 +48,20 @@ func initDB() error {
 
 		log.Println("Checking for users in database")
 		for _, user := range config.Users {
-			log.Println(user)
 			exist := existUser(user)
 
 			if exist == false {
 				//create new entry in the database
 				err = addUser(user, 1)
 				if err != nil {
-					log.Printf("Added new user %s to database\n", user)
-				} else {
 					log.Printf("Could not add %s to database due to %s\n", user, err)
+				} else {
+					log.Printf("Added new user %s to database\n", user)
 				}
 			}
 		}
 
-		log.Printf("users: %v\n", users)
+		log.Printf("users in database: %v\n", users)
 		return nil
 	} else {
 		/*
@@ -75,6 +74,16 @@ func initDB() error {
 		if err != nil {
 			return err
 		}
+
+		for _, user := range config.Users {
+			err = addUser(user, 1)
+			if err != nil {
+				log.Printf("Could not add %s to database due to %s\n", user, err)
+			} else {
+				log.Printf("Added new user %s to database\n", user)
+			}
+		}
+
 		return nil
 	}
 }
@@ -101,7 +110,7 @@ func existTable(tblname string) bool {
  */
 func existUser(username string) bool {
 	var name string
-	err := db.QueryRow(`SELECT username FROM track WHERE name=?`, username).Scan(&name)
+	err := db.QueryRow(`SELECT username FROM track WHERE username=?`, username).Scan(&name)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -144,8 +153,7 @@ func getUsers() ([]string, error) {
 * safe to call simultaneously
  */
 func addUser(name string, group int) error {
-	stmt, err := db.Prepare(`INSERT INTO track (group, username, id, oldAcc, oldPP, oldRank, oldCRank)
-	VALUES (?, ?, ?, ?, ?, ?, ?)`)
+	stmt, err := db.Prepare(`INSERT INTO track VALUES(?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return err
 	}
@@ -156,7 +164,7 @@ func addUser(name string, group int) error {
 	opts := gosu.GetUserOpts{
 		Username:  name,
 		Mode:      gosu.ModeOsu,
-		EventDays: 7,
+		EventDays: 0,
 	}
 
 	user, err := osu.GetUser(opts)
