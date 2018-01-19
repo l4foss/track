@@ -15,6 +15,8 @@ import (
 
 const VERSION string = "0.1beta"
 
+var REVISION string = ""
+
 /*
 * global variables
  */
@@ -41,7 +43,8 @@ Combo: <b>%dx/%dx</b> PP: <b>%.2fpp</b>
 %s
 </pre>`
 
-	scoreFmt string = `#%2d| %3s | %10s  | %10s       | %4dx/%4dx  | %2.2f%%`
+	//	                   #01 | Cookiezi   | 1230x| 99.34%
+	scoreFmt string = `#%2d| %10s       | %4dx | %2.2f%%\n`
 )
 
 /*
@@ -64,8 +67,9 @@ func initTrack() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	log.Println("Done initializing the track! bot")
+	if config.Verbose == 1 {
+		log.Println("Done initializing the track! bot")
+	}
 }
 
 /*
@@ -75,10 +79,12 @@ func genGroupRanking(mapid int) string {
 	//get only group members
 	users, err := getUsers()
 	if err != nil {
-		return "--ERROR--"
+		return "ERROR"
 	}
 
 	var result []gosu.GSScore
+	var output string
+
 	opts := gosu.GetScoresOpts{
 		BeatmapID: mapid,
 		Username:  "someone",
@@ -91,20 +97,27 @@ func genGroupRanking(mapid int) string {
 		score, err := osu.GetScores(opts)
 
 		if err != nil {
+			//user does not have any score on that map
 			continue
 		}
 
 		result = append(result, score[0])
 	}
 
-	return "-.-"
+	//sort result
+	ScoreSort(result)
 
+	for index, play := range result {
+		output += fmt.Sprintf(scoreFmt, index+1, play.Username, play.Score.MaxCombo,
+			calcAccuracy(&play.Score))
+	}
+	return output
 }
 
 /*
 * calculates score accuracy
  */
-func calcAccuracy(play *gosu.GUSScore) float64 {
+func calcAccuracy(play *gosu.Score) float64 {
 	//generates accuracy
 	total := play.MaxCombo * 300
 	got := play.Count300*300 + play.Count100*100 + play.Count50*50
@@ -151,7 +164,9 @@ func genMessage(play *gosu.GUSScore, username string, index int) {
 * called concurrently
  */
 func getTop(username string, wg *sync.WaitGroup) {
-	log.Printf("Fetching new score for %s\n", username)
+	if config.Verbose == 1 {
+		log.Printf("Fetching new score for %s\n", username)
+	}
 	defer wg.Done()
 	opts := gosu.GetUserScoresOpts{
 		Username: username,
@@ -238,7 +253,7 @@ func main() {
 		}
 	case "--version":
 		{
-			fmt.Printf("Track v%s\nUsing Go %s\n", VERSION, runtime.Version())
+			fmt.Printf("Track v%s-%s\nUsing Go %s\n", VERSION, REVISION, runtime.Version())
 		}
 	case "--conf":
 		{
