@@ -1,5 +1,7 @@
 # track!
 ![demo](track.png)
+* ![master build](https://travis-ci.org/l4foss/track.svg?branch=master)
+* ![dev build](https://travis-ci.org/l4foss/track.svg?branch=dev)
 ## Description
 * A Telegram bot that tracks osu! players for theirs new top scores
 * This is a part of *hime* project - an attempt to create a feature-rich and
