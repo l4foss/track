@@ -180,15 +180,14 @@ func getTop(username string, wg *sync.WaitGroup) {
 		return
 	}
 
-	for index, play := range top {
+	for _, play := range top {
 		/*
-		* TODO: calculate and add delay time
+		* BUG: since this depends on system time, invalid system time 
+		* mays cause track to work improperly
+		* I was pretty naive :<
 		 */
-		//t := time.Now().Sub(play.Score.Date.GetTime())
-		//fmt.Printf("%v\n", t)
-
-		if time.Now().Sub(play.Score.Date.GetTime()) <
-			(time.Duration(config.Interval) * time.Second) {
+		diff := time.Now().Sub(play.Score.Date.GetTime())
+		if diff < (time.Duration(config.Interval) * time.Second) {
 			genMessage(&play, username, index)
 		}
 	}
