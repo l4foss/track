@@ -15,7 +15,7 @@ var (
     "interval": %d,
 	"limit": %d,
     "trackdb": %s,
-	"verbose": 1,
+	"verbose": %d,
 	"track": %s
 }`
 )

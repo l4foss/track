@@ -180,7 +180,7 @@ func getTop(username string, wg *sync.WaitGroup) {
 		return
 	}
 
-	for _, play := range top {
+	for index, play := range top {
 		/*
 		* BUG: since this depends on system time, invalid system time 
 		* mays cause track to work improperly
