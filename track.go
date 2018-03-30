@@ -182,7 +182,7 @@ func getTop(username string, wg *sync.WaitGroup) {
 
 	for index, play := range top {
 		/*
-		* BUG: since this depends on system time, invalid system time 
+		* BUG: since this depends on system time, invalid system time
 		* mays cause track to work improperly
 		* I was pretty naive :<
 		 */
@@ -215,7 +215,7 @@ func track() {
  */
 func usage() {
 	var txt string = `Track v%s
-A bot that tracks osu! user for theirs top scores
+A bot that tracks osu! users for theirs top scores
 --
 Usage: %s [option]
 Options:
